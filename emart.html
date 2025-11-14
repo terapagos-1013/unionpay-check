@@ -1152,8 +1152,12 @@
   // --- storeInfo 전체 내용 끝 ---
 
   const items = [
-    { "skuCode": "0195950627138", "itemName": "아이폰 17 프로" },
-    { "skuCode": "0195950638783", "itemName": "아이폰 17 프로 맥스" }
+    { "skuCode": "0195950627138", "itemName": "아이폰 17 프로 실버" },
+	{ "skuCode": "0195950627336", "itemName": "아이폰 17 프로 오렌지" },
+	{ "skuCode": "0195950627534", "itemName": "아이폰 17 프로 딥블루" },
+    { "skuCode": "0195950638783", "itemName": "아이폰 17 프로 맥스 실버" },
+	{ "skuCode": "0195950638981", "itemName": "아이폰 17 프로 맥스 오렌지" },
+	{ "skuCode": "0195950639186", "itemName": "아이폰 17 프로 맥스 딥블루" },
   ];
 
   // ====== DOM 참조 ======
@@ -1576,14 +1580,16 @@
 
       const availableOptions = [];
       for (const opt of optionList) {
-        const valueList = Array.isArray(opt.optionValueList)
-          ? opt.optionValueList
-          : [];
-        for (const v of valueList) {
-          if (v && v.isBuyAvailable === true) {
-            availableOptions.push(v);
-          }
-        }
+		if(opt.optionName == "저장용량") {
+			const valueList = Array.isArray(opt.optionValueList)
+			  ? opt.optionValueList
+			  : [];
+			for (const v of valueList) {
+			  if (v && v.isBuyAvailable === true) {
+				availableOptions.push(v);
+			  }
+			}
+		}
       }
 
       const isAvailableNow = availableOptions.length > 0;
