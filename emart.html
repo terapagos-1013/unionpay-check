@@ -1654,7 +1654,7 @@
 
       updateRowStatus(storeCode, skuCode, {
         statusType: 'success',
-        text: `구매 가능 · ${labels.length ? labels.length + '종' : availableOptions.length + '개'}`,
+        text: `구매 가능 · ${availableOptions.length ? availableOptions.map(o => o.optionValueName).join(',') : availableOptions.length + '개'}`,
         link: viewUrl
       });
 
