@@ -1209,11 +1209,9 @@
     return `https://eapp.emart.com/webapp/digital/view/${skuCode}?storeCode=${storeCode}&trcknCode=cafe_mom`;
   }
 
-  function buildApiUrl(skuCode /*, storeCode*/) {
+  function buildApiUrl(skuCode, storeCode) {
     const base = "https://api-eapp.emart.com/panda/api/v1/digital-grab/item";
-    const params = new URLSearchParams({ skuCode });
-    // 필요 시 storeCode 추가
-    // params.append("storeCode", storeCode);
+    const params = new URLSearchParams({ skuCode, storeCode });
     return `${base}?${params.toString()}`;
   }
 
