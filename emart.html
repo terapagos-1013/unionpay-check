@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>이마트 디지털 그랩 재고 모니터</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --card-bg: #ffffff;
+      --accent: #ffb300;
+      --accent-dark: #ff8f00;
+      --border: #e0e0e0;
+      --text-main: #222222;
+      --text-muted: #666666;
+      --danger: #d32f2f;
+      --success: #2e7d32;
+      --shadow-soft: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    header {
+      margin-bottom: 12px;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      margin: 0 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 span.logo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: inline-block;
+    }
+
+    header .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* 상단 컨트롤 */
+    .control-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .control-group label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    select, button, input[type="checkbox"] {
+      font: inherit;
+    }
+
+    select, button {
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      background: #fff;
+    }
+
+    select:focus, button:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    button {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent-dark);
+      color: #000;
+      font-weight: 600;
+    }
+
+    button.primary:active {
+      background: var(--accent-dark);
+    }
+
+    button.secondary {
+      background: #fff3e0;
+      border-color: #ffe0b2;
+      color: #e65100;
+    }
+
+    button.danger {
+      background: #ffebee;
+      border-color: #ffcdd2;
+      color: var(--danger);
+    }
+
+    .status-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-left: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: flex-end;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .status-dot.running {
+      background: var(--success);
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-dot.stopped {
+      background: #9e9e9e;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.4); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.5; }
+    }
+
+    .last-refresh {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* 아코디언 카드 공통 */
+    .accordion-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 8px 12px 10px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-soft);
+      font-size: 0.85rem;
+    }
+
+    .accordion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 0;
+    }
+
+    .accordion-title {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .accordion-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .accordion-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .accordion-arrow {
+      font-size: 0.9rem;
+      transition: transform 0.2s ease;
+    }
+
+    .accordion-header[aria-expanded="false"] .accordion-arrow {
+      transform: rotate(-90deg);
+    }
+
+    .accordion-body {
+      margin-top: 6px;
+    }
+
+    .accordion-body.collapsed {
+      display: none;
+    }
+
+    /* 점포 선택 */
+    #storeCheckboxContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 6px 12px;
+      margin-top: 4px;
+    }
+
+    .area-group {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .area-group-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .area-group-title a {
+      text-decoration: none;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    .area-group-title a:hover {
+      text-decoration: underline;
+    }
+
+    .store-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px 8px;
+      margin-top: 2px;
+    }
+
+    .store-list label {
+      font-size: 0.8rem;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .store-list input[type="checkbox"] {
+      transform: scale(0.95);
+    }
+
+    /* 아이템 선택 */
+    #itemCheckboxContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      margin-top: 4px;
+    }
+
+    #itemCheckboxContainer label {
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #fafafa;
+      border: 1px solid var(--border);
+    }
+
+    #itemCheckboxContainer input[type="checkbox"] {
+      transform: scale(0.95);
+    }
+
+    /* 알림 & 테이블 영역 */
+    .panel-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 800px) {
+      .panel-row { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: var(--shadow-soft);
+      padding: 10px 12px;
+      min-height: 80px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    #notificationList {
+      max-height: 260px;
+      overflow-y: auto;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+      padding-top: 4px;
+      font-size: 0.8rem;
+    }
+
+    #notificationList li {
+      padding: 4px 6px;
+      border-bottom: 1px dashed #eee;
+      border-radius: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #notificationList li a {
+      color: var(--accent-dark);
+      text-decoration: none;
+    }
+
+    #notificationList li a:hover {
+      text-decoration: underline;
+    }
+
+    /* 새 알림 하이라이트 */
+    .new-alert {
+      background-color: #fff8e1;
+      animation: highlightFade 4s ease-out forwards;
+    }
+
+    @keyframes highlightFade {
+      0% { background-color: #fff8e1; }
+      100% { background-color: transparent; }
+    }
+
+    /* 표 영역 */
+    .table-wrapper {
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: var(--shadow-soft);
+      padding: 10px 12px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+      font-size: 0.85rem;
+    }
+
+    thead { background: #fafafa; }
+
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 600;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      position: sticky;
+      top: 0;
+      background: #fafafa;
+      z-index: 1;
+    }
+
+    tr:nth-child(even) td { background: #fcfcfc; }
+
+    td.status-cell { font-weight: 600; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .badge.success {
+      border-color: #c8e6c9;
+      background: #e8f5e9;
+      color: var(--success);
+    }
+
+    .badge.muted {
+      border-color: #e0e0e0;
+      background: #fafafa;
+      color: #9e9e9e;
+    }
+
+    .badge.error {
+      border-color: #ffcdd2;
+      background: #ffebee;
+      color: var(--danger);
+    }
+
+    .badge.loading {
+      border-color: #bbdefb;
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .badge.info {
+      border-color: #ffe0b2;
+      background: #fff3e0;
+      color: #ef6c00;
+    }
+
+    td a.inline-link {
+      color: var(--accent-dark);
+      text-decoration: none;
+    }
+
+    td a.inline-link:hover {
+      text-decoration: underline;
+    }
+
+    /* 비활성 행 */
+    .row-inactive {
+      opacity: 0.35;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>
+      <span class="logo-dot"></span>
+      이마트 디지털 그랩 재고 모니터
+    </h1>
+    <div class="subtitle">
+      아이폰 17 프로 / 프로 맥스 – 점포·SKU별 재고 자동 모니터링 & 브라우저 알림
+    </div>
+  </header>
+
+  <!-- 상단 컨트롤 -->
+  <div class="control-card">
+    <div class="control-group">
+      <label>
+        <input type="checkbox" id="pushToggle" />
+        브라우저 푸시 알림
+      </label>
+    </div>
+
+    <div class="control-group">
+      <label for="intervalSelect">갱신 주기</label>
+      <select id="intervalSelect">
+        <option value="60000">1분</option>
+        <option value="300000">5분</option>
+		<option value="600000">10분</option>
+		<option value="1800000">30분</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <button id="startBtn" class="primary">▶ 자동갱신 시작</button>
+      <button id="stopBtn" class="danger">■ 중지</button>
+    </div>
+
+    <div class="status-text">
+      <div>
+        <span id="runStatusDot" class="status-dot stopped"></span>
+        <span id="runStatusLabel">대기 중</span>
+      </div>
+      <div id="lastGlobalRefresh" class="last-refresh"></div>
+    </div>
+  </div>
+
+  <!-- 점포 선택 아코디언 -->
+  <section class="accordion-card">
+    <div class="accordion-header" data-target="storeAccordionBody" aria-expanded="true">
+      <div>
+        <div class="accordion-title">
+          점포 선택
+          <span style="font-size:0.78rem; color:var(--text-muted);">(지역별 그룹)</span>
+        </div>
+      </div>
+      <div class="accordion-right">
+        <div class="control-group" style="font-size:0.8rem;">
+          <button id="selectAllStoresBtn" class="secondary">전체 선택</button>
+          <button id="unselectAllStoresBtn" class="secondary">전체 해제</button>
+        </div>
+        <span class="accordion-arrow">▼</span>
+      </div>
+    </div>
+    <div class="accordion-body" id="storeAccordionBody">
+      <div id="storeCheckboxContainer"></div>
+    </div>
+  </section>
+
+  <!-- 아이템 선택 아코디언 -->
+  <section class="accordion-card">
+    <div class="accordion-header" data-target="itemAccordionBody" aria-expanded="true">
+      <div>
+        <div class="accordion-title">
+          아이템(SKU) 선택
+        </div>
+      </div>
+      <div class="accordion-right">
+        <div class="control-group" style="font-size:0.8rem;">
+          <button id="selectAllItemsBtn" class="secondary">전체 선택</button>
+          <button id="unselectAllItemsBtn" class="secondary">전체 해제</button>
+        </div>
+        <span class="accordion-arrow">▼</span>
+      </div>
+    </div>
+    <div class="accordion-body" id="itemAccordionBody">
+      <div id="itemCheckboxContainer"></div>
+    </div>
+  </section>
+
+  <!-- 알림 & 테이블 -->
+  <div class="accordion-card">
+    <!-- 알림 카드 -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-title">알림창</div>
+        <button id="clearNotiBtn" class="secondary" style="font-size:0.8rem;">알림 비우기</button>
+      </div>
+      <ul id="notificationList"></ul>
+    </section>
+  </div>
+  
+  <div class="accordion-card">
+    <!-- 테이블 영역 -->
+    <section class="table-wrapper">
+      <div class="card-header" style="padding:4px 0 6px;">
+        <div class="card-title">점포·아이템별 재고 상태</div>
+      </div>
+      <div style="margin: 4px 0 8px; font-size:0.8rem; color:var(--text-muted);">
+        선택된 점포·아이템 조합이 위에, 선택되지 않은 조합은 아래에 정렬됩니다. (지역 → 점포명 → 아이템 순 유지)
+      </div>
+      <table>
+        <thead>
+        <tr>
+          <th>지역</th>
+          <th>점포명</th>
+          <th>점포코드</th>
+          <th>아이템</th>
+          <th>SKU</th>
+          <th>상태</th>
+          <th>마지막 갱신</th>
+          <th>바로가기</th>
+        </tr>
+        </thead>
+        <tbody id="stockTableBody">
+        <!-- JS로 채움 -->
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
+
+<script>
+  // ====== 지역 정보 ======
+  const areaList = [
+    { "areaCode": "A", "areaName": "서울" },
+    { "areaCode": "C", "areaName": "인천" },
+    { "areaCode": "I", "areaName": "경기" },
+    { "areaCode": "F", "areaName": "대전" },
+    { "areaCode": "Q", "areaName": "세종" },
+    { "areaCode": "N", "areaName": "충남" },
+    { "areaCode": "O", "areaName": "충북" },
+    { "areaCode": "D", "areaName": "대구" },
+    { "areaCode": "J", "areaName": "경남" },
+    { "areaCode": "K", "areaName": "경북" },
+    { "areaCode": "G", "areaName": "울산" },
+    { "areaCode": "B", "areaName": "부산" },
+    { "areaCode": "E", "areaName": "광주" },
+    { "areaCode": "L", "areaName": "전남" },
+    { "areaCode": "M", "areaName": "전북" },
+    { "areaCode": "H", "areaName": "강원" },
+    { "areaCode": "P", "areaName": "제주" }
+  ];
+
+  // ====== 점포 정보 ======
+  const storeInfo = [/* (생략 아님: 실제 코드에서는 전체 storeInfo 배열이 들어가야 합니다) */];
+
+  // 위 줄을 실제 전체 storeInfo로 교체 (길어서 여기서 생략 없애기 위해 그대로 붙이세요)
+  // --- storeInfo 전체 내용 시작 ---
+  Object.assign(storeInfo, [
+    {
+      "storeCode": "1320",
+      "storeName": "스타필드마켓 동탄점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "6830",
+      "storeName": "스타필드마켓 일산점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1150",
+      "storeName": "스타필드마켓 죽전점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "2310",
+      "storeName": "이마트 가든5점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "7600",
+      "storeName": "이마트 강릉점",
+      "storeType": "E",
+      "areaCode": "H",
+      "areaName": "강원"
+    },
+    {
+      "storeCode": "1530",
+      "storeName": "이마트 경기광주점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1010",
+      "storeName": "이마트 광산점",
+      "storeType": "E",
+      "areaCode": "E",
+      "areaName": "광주"
+    },
+    {
+      "storeCode": "3400",
+      "storeName": "이마트 구로점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "6900",
+      "storeName": "이마트 구미점",
+      "storeType": "E",
+      "areaCode": "K",
+      "areaName": "경북"
+    },
+    {
+      "storeCode": "4600",
+      "storeName": "이마트 군산점",
+      "storeType": "E",
+      "areaCode": "M",
+      "areaName": "전북"
+    },
+    {
+      "storeCode": "8000",
+      "storeName": "이마트 금정점",
+      "storeType": "E",
+      "areaCode": "B",
+      "areaName": "부산"
+    },
+    {
+      "storeCode": "2970",
+      "storeName": "이마트 김해점",
+      "storeType": "E",
+      "areaCode": "J",
+      "areaName": "경남"
+    },
+    {
+      "storeCode": "1160",
+      "storeName": "이마트 남양주점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1350",
+      "storeName": "이마트 다산점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "2250",
+      "storeName": "이마트 대전터미널점",
+      "storeType": "E",
+      "areaCode": "F",
+      "areaName": "대전"
+    },
+    {
+      "storeCode": "6800",
+      "storeName": "이마트 둔산점",
+      "storeType": "E",
+      "areaCode": "F",
+      "areaName": "대전"
+    },
+    {
+      "storeCode": "1850",
+      "storeName": "이마트 마산점",
+      "storeType": "E",
+      "areaCode": "J",
+      "areaName": "경남"
+    },
+    {
+      "storeCode": "4500",
+      "storeName": "이마트 만촌점",
+      "storeType": "E",
+      "areaCode": "D",
+      "areaName": "대구"
+    },
+    {
+      "storeCode": "7300",
+      "storeName": "이마트 명일점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "1480",
+      "storeName": "이마트 목동점(양천구)",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "4300",
+      "storeName": "이마트 목포점",
+      "storeType": "E",
+      "areaCode": "L",
+      "areaName": "전남"
+    },
+    {
+      "storeCode": "7900",
+      "storeName": "이마트 문현점",
+      "storeType": "E",
+      "areaCode": "B",
+      "areaName": "부산"
+    },
+    {
+      "storeCode": "3530",
+      "storeName": "이마트 별내점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1290",
+      "storeName": "이마트 봉선점",
+      "storeType": "E",
+      "areaCode": "E",
+      "areaName": "광주"
+    },
+    {
+      "storeCode": "9400",
+      "storeName": "이마트 사상점",
+      "storeType": "E",
+      "areaCode": "B",
+      "areaName": "부산"
+    },
+    {
+      "storeCode": "3600",
+      "storeName": "이마트 산본점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1190",
+      "storeName": "이마트 서귀포점",
+      "storeType": "E",
+      "areaCode": "P",
+      "areaName": "제주"
+    },
+    {
+      "storeCode": "1140",
+      "storeName": "이마트 서수원점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "3500",
+      "storeName": "이마트 성서점",
+      "storeType": "E",
+      "areaCode": "D",
+      "areaName": "대구"
+    },
+    {
+      "storeCode": "6720",
+      "storeName": "이마트 세종점",
+      "storeType": "E",
+      "areaCode": "Q",
+      "areaName": "세종"
+    },
+    {
+      "storeCode": "5400",
+      "storeName": "이마트 수원점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "8300",
+      "storeName": "이마트 수지점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1120",
+      "storeName": "이마트 순천점",
+      "storeType": "E",
+      "areaCode": "L",
+      "areaName": "전남"
+    },
+    {
+      "storeCode": "8400",
+      "storeName": "이마트 신제주점",
+      "storeType": "E",
+      "areaCode": "P",
+      "areaName": "제주"
+    },
+    {
+      "storeCode": "7800",
+      "storeName": "이마트 안산고잔점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1030",
+      "storeName": "이마트 양산점",
+      "storeType": "E",
+      "areaCode": "J",
+      "areaName": "경남"
+    },
+    {
+      "storeCode": "1090",
+      "storeName": "이마트 양재점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "5800",
+      "storeName": "이마트 여수점",
+      "storeType": "E",
+      "areaCode": "L",
+      "areaName": "전남"
+    },
+    {
+      "storeCode": "1310",
+      "storeName": "이마트 여주점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "7400",
+      "storeName": "이마트 연수점",
+      "storeType": "E",
+      "areaCode": "C",
+      "areaName": "인천"
+    },
+    {
+      "storeCode": "6600",
+      "storeName": "이마트 연제점",
+      "storeType": "E",
+      "areaCode": "B",
+      "areaName": "부산"
+    },
+    {
+      "storeCode": "1520",
+      "storeName": "이마트 영등포점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "1170",
+      "storeName": "이마트 오산점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1380",
+      "storeName": "이마트 왕십리점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "1070",
+      "storeName": "이마트 용산점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "9600",
+      "storeName": "이마트 울산점",
+      "storeType": "E",
+      "areaCode": "G",
+      "areaName": "울산"
+    },
+    {
+      "storeCode": "1060",
+      "storeName": "이마트 월계점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "4800",
+      "storeName": "이마트 월배점",
+      "storeType": "E",
+      "areaCode": "D",
+      "areaName": "대구"
+    },
+    {
+      "storeCode": "5700",
+      "storeName": "이마트 은평점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "4100",
+      "storeName": "이마트 이천점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1220",
+      "storeName": "이마트 익산점",
+      "storeType": "E",
+      "areaCode": "M",
+      "areaName": "전북"
+    },
+    {
+      "storeCode": "1260",
+      "storeName": "이마트 자양점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "3200",
+      "storeName": "이마트 전주점",
+      "storeType": "E",
+      "areaCode": "M",
+      "areaName": "전북"
+    },
+    {
+      "storeCode": "1810",
+      "storeName": "이마트 중동점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "4200",
+      "storeName": "이마트 진주점",
+      "storeType": "E",
+      "areaCode": "J",
+      "areaName": "경남"
+    },
+    {
+      "storeCode": "2000",
+      "storeName": "이마트 창동점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "7200",
+      "storeName": "이마트 창원점",
+      "storeType": "E",
+      "areaCode": "J",
+      "areaName": "경남"
+    },
+    {
+      "storeCode": "2510",
+      "storeName": "이마트 천안서북점",
+      "storeType": "E",
+      "areaCode": "N",
+      "areaName": "충남"
+    },
+    {
+      "storeCode": "4900",
+      "storeName": "이마트 천안점",
+      "storeType": "E",
+      "areaCode": "N",
+      "areaName": "충남"
+    },
+    {
+      "storeCode": "1370",
+      "storeName": "이마트 청계천점",
+      "storeType": "E",
+      "areaCode": "A",
+      "areaName": "서울"
+    },
+    {
+      "storeCode": "3100",
+      "storeName": "이마트 청주점",
+      "storeType": "E",
+      "areaCode": "O",
+      "areaName": "충북"
+    },
+    {
+      "storeCode": "1130",
+      "storeName": "이마트 춘천점",
+      "storeType": "E",
+      "areaCode": "H",
+      "areaName": "강원"
+    },
+    {
+      "storeCode": "6700",
+      "storeName": "이마트 칠성점",
+      "storeType": "E",
+      "areaCode": "D",
+      "areaName": "대구"
+    },
+    {
+      "storeCode": "1110",
+      "storeName": "이마트 통영점",
+      "storeType": "E",
+      "areaCode": "J",
+      "areaName": "경남"
+    },
+    {
+      "storeCode": "1830",
+      "storeName": "이마트 평촌점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "5600",
+      "storeName": "이마트 평택점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "6500",
+      "storeName": "이마트 포항점",
+      "storeType": "E",
+      "areaCode": "K",
+      "areaName": "경북"
+    },
+    {
+      "storeCode": "6430",
+      "storeName": "이마트 풍산점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "1360",
+      "storeName": "이마트 하남점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "3900",
+      "storeName": "이마트 해운대점",
+      "storeType": "E",
+      "areaCode": "B",
+      "areaName": "부산"
+    },
+    {
+      "storeCode": "4027",
+      "storeName": "일렉트로마트 스타필드 고양점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "7192",
+      "storeName": "일렉트로마트 스타필드 수원점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "4201",
+      "storeName": "일렉트로마트 스타필드 안성점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    },
+    {
+      "storeCode": "3031",
+      "storeName": "일렉트로마트 스타필드 하남점",
+      "storeType": "E",
+      "areaCode": "I",
+      "areaName": "경기"
+    }
+  ]);
+  // --- storeInfo 전체 내용 끝 ---
+
+  const items = [
+    { "skuCode": "0195950627138", "itemName": "아이폰 17 프로" },
+    { "skuCode": "0195950638783", "itemName": "아이폰 17 프로 맥스" }
+  ];
+
+  // ====== DOM 참조 ======
+  const tableBody = document.getElementById('stockTableBody');
+  const notificationListEl = document.getElementById('notificationList');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const clearNotiBtn = document.getElementById('clearNotiBtn');
+  const intervalSelect = document.getElementById('intervalSelect');
+  const runStatusDot = document.getElementById('runStatusDot');
+  const runStatusLabel = document.getElementById('runStatusLabel');
+  const lastGlobalRefreshEl = document.getElementById('lastGlobalRefresh');
+  const pushToggle = document.getElementById('pushToggle');
+
+  const storeCheckboxContainer = document.getElementById('storeCheckboxContainer');
+  const selectAllStoresBtn = document.getElementById('selectAllStoresBtn');
+  const unselectAllStoresBtn = document.getElementById('unselectAllStoresBtn');
+
+  const itemCheckboxContainer = document.getElementById('itemCheckboxContainer');
+  const selectAllItemsBtn = document.getElementById('selectAllItemsBtn');
+  const unselectAllItemsBtn = document.getElementById('unselectAllItemsBtn');
+
+  // ====== 상태 관리 ======
+  let autoTimerId = null;
+  let isRefreshing = false;
+
+  // 마지막 상태 저장: key: storeCode_skuCode -> { available, optionsKey }
+  const lastStateMap = new Map();
+
+  // 정렬용 인덱스
+  const areaOrder = new Map(areaList.map((a, idx) => [a.areaCode, idx]));
+  const itemOrder = new Map(items.map((it, idx) => [it.skuCode, idx]));
+  const storeByCode = new Map(storeInfo.map(s => [s.storeCode, s]));
+
+  // ====== 유틸 ======
+  function formatDateTime(d = new Date()) {
+    return d.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  }
+
+  function buildViewUrl(skuCode, storeCode) {
+    return `https://eapp.emart.com/webapp/digital/view/${skuCode}?storeCode=${storeCode}&trcknCode=cafe_mom`;
+  }
+
+  function buildApiUrl(skuCode /*, storeCode*/) {
+    const base = "https://api-eapp.emart.com/panda/api/v1/digital-grab/item";
+    const params = new URLSearchParams({ skuCode });
+    // 필요 시 storeCode 추가
+    // params.append("storeCode", storeCode);
+    return `${base}?${params.toString()}`;
+  }
+
+  // ====== 아코디언 초기화 ======
+  function initAccordions() {
+    const headers = document.querySelectorAll('.accordion-header');
+    headers.forEach(header => {
+      const targetId = header.getAttribute('data-target');
+      const body = document.getElementById(targetId);
+      if (!body) return;
+
+      header.addEventListener('click', e => {
+        // 버튼 누를 때는 아코디언 닫히지 않게
+        if (e.target.tagName === 'BUTTON') return;
+
+        const expanded = header.getAttribute('aria-expanded') === 'true';
+        header.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        body.classList.toggle('collapsed', expanded);
+      });
+    });
+  }
+
+  // ====== 점포 선택 UI ======
+  function initStoreSelectionPanel() {
+    const grouped = {};
+    for (const s of storeInfo) {
+      if (!grouped[s.areaCode]) grouped[s.areaCode] = [];
+      grouped[s.areaCode].push(s);
+    }
+
+    const frag = document.createDocumentFragment();
+
+    for (const area of areaList) {
+      const stores = grouped[area.areaCode];
+      if (!stores || stores.length === 0) continue;
+
+      // 점포 이름 정렬
+      stores.sort((a, b) => a.storeName.localeCompare(b.storeName, 'ko'));
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'area-group';
+      wrapper.dataset.areaCode = area.areaCode;
+
+      const header = document.createElement('div');
+      header.className = 'area-group-title';
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = `${area.areaName} (${area.areaCode})`;
+      const btns = document.createElement('span');
+      btns.innerHTML =
+        `<a href="#" data-action="area-select" data-area="${area.areaCode}">전체</a>` +
+        ` / <a href="#" data-action="area-unselect" data-area="${area.areaCode}">해제</a>`;
+      header.appendChild(titleSpan);
+      header.appendChild(btns);
+
+      const list = document.createElement('div');
+      list.className = 'store-list';
+
+      stores.forEach(store => {
+        const label = document.createElement('label');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.name = 'store-select';
+        cb.value = store.storeCode;
+        cb.checked = true;
+        cb.dataset.storeCode = store.storeCode;
+
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(store.storeName));
+        list.appendChild(label);
+      });
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(list);
+      frag.appendChild(wrapper);
+    }
+
+    storeCheckboxContainer.appendChild(frag);
+
+    // 지역별 전체/해제
+    storeCheckboxContainer.addEventListener('click', e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      const action = target.dataset.action;
+      if (!action) return;
+      e.preventDefault();
+      const areaCode = target.dataset.area;
+      if (!areaCode) return;
+
+      const groupEl = storeCheckboxContainer.querySelector(
+        `.area-group[data-area-code="${areaCode}"]`
+      );
+      if (!groupEl) return;
+
+      const cbs = groupEl.querySelectorAll('input[name="store-select"]');
+      cbs.forEach(cb => {
+        cb.checked = action === 'area-select';
+      });
+
+      applySelectionsToTable();
+    });
+
+    storeCheckboxContainer.addEventListener('change', e => {
+      if (e.target && e.target.name === 'store-select') {
+        applySelectionsToTable();
+      }
+    });
+  }
+
+  function getSelectedStoreCodesSet() {
+    const set = new Set();
+    const cbs = document.querySelectorAll('input[name="store-select"]:checked');
+    cbs.forEach(cb => set.add(cb.value));
+    return set;
+  }
+
+  // ====== 아이템 선택 UI ======
+  function initItemSelectionPanel() {
+    const frag = document.createDocumentFragment();
+
+    items.forEach(item => {
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.name = 'item-select';
+      cb.value = item.skuCode;
+      cb.checked = true;
+      cb.dataset.skuCode = item.skuCode;
+
+      label.appendChild(cb);
+      label.appendChild(
+        document.createTextNode(`${item.itemName} (${item.skuCode})`)
+      );
+      frag.appendChild(label);
+    });
+
+    itemCheckboxContainer.appendChild(frag);
+
+    itemCheckboxContainer.addEventListener('change', e => {
+      if (e.target && e.target.name === 'item-select') {
+        applySelectionsToTable();
+      }
+    });
+
+    selectAllItemsBtn.addEventListener('click', () => {
+      const cbs = document.querySelectorAll('input[name="item-select"]');
+      cbs.forEach(cb => (cb.checked = true));
+      applySelectionsToTable();
+    });
+
+    unselectAllItemsBtn.addEventListener('click', () => {
+      const cbs = document.querySelectorAll('input[name="item-select"]');
+      cbs.forEach(cb => (cb.checked = false));
+      applySelectionsToTable();
+    });
+  }
+
+  function getSelectedItemSkuSet() {
+    const set = new Set();
+    const cbs = document.querySelectorAll('input[name="item-select"]:checked');
+    cbs.forEach(cb => set.add(cb.value));
+    return set;
+  }
+
+  // ====== 테이블 초기 생성 ======
+  function initTable() {
+    const frag = document.createDocumentFragment();
+
+    // 기본 정렬: 지역 -> 점포명 -> 아이템 순으로 행 생성
+    const storesSorted = [...storeInfo].sort((a, b) => {
+      const ao = (areaOrder.get(a.areaCode) ?? 999) - (areaOrder.get(b.areaCode) ?? 999);
+      if (ao !== 0) return ao;
+      return a.storeName.localeCompare(b.storeName, 'ko');
+    });
+
+    storesSorted.forEach(store => {
+      items.forEach(item => {
+        const key = `${store.storeCode}_${item.skuCode}`;
+        const tr = document.createElement('tr');
+        tr.dataset.key = key;
+        tr.dataset.storeCode = store.storeCode;
+        tr.dataset.skuCode = item.skuCode;
+
+        tr.innerHTML = `
+          <td>${store.areaName}</td>
+          <td>${store.storeName}</td>
+          <td>${store.storeCode}</td>
+          <td>${item.itemName}</td>
+          <td>${item.skuCode}</td>
+          <td class="status-cell">
+            <span class="badge muted">대기 중</span>
+          </td>
+          <td class="last-checked">-</td>
+          <td class="link-cell">-</td>
+        `;
+        frag.appendChild(tr);
+      });
+    });
+
+    tableBody.appendChild(frag);
+  }
+
+  function updateRowStatus(storeCode, skuCode, { statusType, text, link }) {
+    const key = `${storeCode}_${skuCode}`;
+    const row = tableBody.querySelector(`tr[data-key="${key}"]`);
+    if (!row) return;
+
+    const statusTd = row.querySelector('.status-cell');
+    const lastTd = row.querySelector('.last-checked');
+    const linkTd = row.querySelector('.link-cell');
+
+    lastTd.textContent = formatDateTime();
+
+    let badgeClass = 'muted';
+    if (statusType === 'success') badgeClass = 'success';
+    else if (statusType === 'error') badgeClass = 'error';
+    else if (statusType === 'loading') badgeClass = 'loading';
+    else if (statusType === 'info') badgeClass = 'info';
+
+    statusTd.innerHTML = `<span class="badge ${badgeClass}">${text}</span>`;
+
+    if (link) {
+      linkTd.innerHTML =
+        `<a class="inline-link" href="${link}" target="_blank" rel="noopener noreferrer">상품 페이지</a>`;
+    } else {
+      linkTd.textContent = '-';
+    }
+  }
+
+  // ====== 알림 / 푸시 ======
+  function appendNotification({ store, item, message, viewUrl }) {
+    const li = document.createElement('li');
+    const time = formatDateTime();
+    li.innerHTML =
+      `[${time}] ${store.areaName} ${store.storeName} (${store.storeCode}) ` +
+      `${item.itemName} - ${message} - ` +
+      `<a href="${viewUrl}" target="_blank" rel="noopener noreferrer">바로가기</a>`;
+
+    li.classList.add('new-alert');
+    li.addEventListener('animationend', () => {
+      li.classList.remove('new-alert');
+    });
+
+    notificationListEl.prepend(li);
+  }
+
+  function requestNotificationPermissionIfNeeded() {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then(r => {
+        console.log("Notification permission:", r);
+      });
+    }
+  }
+
+  function pushBrowserNotification({ store, item, message, viewUrl }) {
+    if (!pushToggle.checked) return;        // 푸시 토글 OFF면 전송 안함
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    const title = `재고 감지: ${item.itemName}`;
+    const body = `[${store.areaName} ${store.storeName}] ${message}`;
+    const n = new Notification(title, {
+      body,
+      icon: "https://eapp.emart.com/favicon.ico",
+      data: { url: viewUrl }
+    });
+    n.onclick = function (event) {
+      event.preventDefault();
+      if (n.data && n.data.url) {
+        window.open(n.data.url, "_blank");
+      }
+      n.close();
+    };
+  }
+
+  // ====== 선택에 따라 행 상태/정렬 반영 ======
+  function applySelectionsToTable() {
+    const selectedStores = getSelectedStoreCodesSet();
+    const selectedItems = getSelectedItemSkuSet();
+
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+    const activeRows = [];
+    const inactiveRows = [];
+
+    rows.forEach(row => {
+      const storeCode = row.dataset.storeCode;
+      const skuCode = row.dataset.skuCode;
+
+      const isActive =
+        selectedStores.size > 0 &&
+        selectedItems.size > 0 &&
+        selectedStores.has(storeCode) &&
+        selectedItems.has(skuCode);
+
+      if (isActive) {
+        row.classList.remove('row-inactive');
+        activeRows.push(row);
+      } else {
+        row.classList.add('row-inactive');
+        inactiveRows.push(row);
+      }
+    });
+
+    function rowSortFn(a, b) {
+      const sa = storeByCode.get(a.dataset.storeCode);
+      const sb = storeByCode.get(b.dataset.storeCode);
+      const ia = itemOrder.get(a.dataset.skuCode) ?? 999;
+      const ib = itemOrder.get(b.dataset.skuCode) ?? 999;
+
+      const ao =
+        (areaOrder.get(sa?.areaCode) ?? 999) -
+        (areaOrder.get(sb?.areaCode) ?? 999);
+      if (ao !== 0) return ao;
+
+      const sn = (sa?.storeName || '').localeCompare(
+        sb?.storeName || '',
+        'ko'
+      );
+      if (sn !== 0) return sn;
+
+      return ia - ib;
+    }
+
+    activeRows.sort(rowSortFn);
+    inactiveRows.sort(rowSortFn);
+
+    tableBody.replaceChildren(...activeRows, ...inactiveRows);
+  }
+
+  // ====== API 호출 ======
+  async function fetchStockFor(store, item) {
+    const { storeCode } = store;
+    const { skuCode } = item;
+    const key = `${storeCode}_${skuCode}`;
+
+    updateRowStatus(storeCode, skuCode, {
+      statusType: 'loading',
+      text: '조회 중…',
+      link: null
+    });
+
+    const url = buildApiUrl(skuCode, storeCode);
+
+    try {
+      const resp = await fetch(url, {
+        method: "GET",
+        headers: {
+          "accept": "application/json, text/plain, */*",
+          "content-type": "application/json"
+        },
+        credentials: "omit"
+      });
+
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+
+      const json = await resp.json();
+      const data = json.data || {};
+      const optionList = Array.isArray(data.itemOptionList)
+        ? data.itemOptionList
+        : [];
+
+      const availableOptions = [];
+      for (const opt of optionList) {
+        const valueList = Array.isArray(opt.optionValueList)
+          ? opt.optionValueList
+          : [];
+        for (const v of valueList) {
+          if (v && v.isBuyAvailable === true) {
+            availableOptions.push(v);
+          }
+        }
+      }
+
+      const isAvailableNow = availableOptions.length > 0;
+
+      const labels = [...new Set(
+        availableOptions
+          .map(v => v.optionValueName || v.optionName || '')
+          .map(s => s.trim())
+          .filter(Boolean)
+      )];
+
+      const optionsKey = isAvailableNow
+        ? (labels.length
+          ? labels.slice().sort().join('|')
+          : `SKU:${availableOptions.map(v => v.skuCode || '').slice().sort().join('|')}`)
+        : 'NONE';
+
+      const prevState = lastStateMap.get(key) || { available: null, optionsKey: null };
+      const changed =
+        prevState.available !== isAvailableNow ||
+        prevState.optionsKey !== optionsKey;
+
+      lastStateMap.set(key, {
+        available: isAvailableNow,
+        optionsKey
+      });
+
+      const viewSku = isAvailableNow
+        ? (availableOptions[0].skuCode || skuCode)
+        : skuCode;
+      const viewUrl = buildViewUrl(viewSku, storeCode);
+
+      if (!isAvailableNow) {
+        updateRowStatus(storeCode, skuCode, {
+          statusType: 'muted',
+          text: '품절 / 구매 불가',
+          link: null
+        });
+
+        if (changed && prevState.available === true) {
+          const msg = '재고 종료 (구매 가능 옵션 없음)';
+          appendNotification({ store, item, message: msg, viewUrl });
+          // 품절로 바뀔 때는 푸시는 보내지 않음
+        }
+        return;
+      }
+
+      const labelSummary =
+        labels.length > 0
+          ? `${labels.join(', ')} (${availableOptions.length}개 옵션)`
+          : `구매 가능 옵션 ${availableOptions.length}개`;
+
+      updateRowStatus(storeCode, skuCode, {
+        statusType: 'success',
+        text: `구매 가능 · ${labels.length ? labels.length + '종' : availableOptions.length + '개'}`,
+        link: viewUrl
+      });
+
+      if (!changed) {
+        // 상태/옵션이 그대로면 알림 X
+        return;
+      }
+
+      const message = `구매 가능: ${labelSummary}`;
+      appendNotification({ store, item, message, viewUrl });
+      // 구매 가능으로 바뀔 때만 푸시
+      pushBrowserNotification({ store, item, message, viewUrl });
+
+    } catch (e) {
+      console.error("API 호출 실패:", e);
+      updateRowStatus(storeCode, skuCode, {
+        statusType: 'error',
+        text: `에러: ${e.message || e}`,
+        link: null
+      });
+    }
+  }
+
+  // 전체 갱신
+  const MAX_CONCURRENT = 10;
+
+  async function refreshAll() {
+    if (isRefreshing) {
+      console.log("이전 갱신이 아직 끝나지 않아 스킵");
+      return;
+    }
+    const selectedStores = getSelectedStoreCodesSet();
+    const selectedItems = getSelectedItemSkuSet();
+    if (selectedStores.size === 0 || selectedItems.size === 0) {
+      console.log("선택된 점포 또는 아이템이 없음. 갱신 스킵");
+      return;
+    }
+
+    isRefreshing = true;
+
+    const tasks = [];
+    for (const store of storeInfo) {
+      if (!selectedStores.has(store.storeCode)) continue;
+      for (const item of items) {
+        if (!selectedItems.has(item.skuCode)) continue;
+        tasks.push({ store, item });
+      }
+    }
+
+    let index = 0;
+    async function worker() {
+      while (index < tasks.length) {
+        const current = tasks[index++];
+        await fetchStockFor(current.store, current.item);
+      }
+    }
+
+    try {
+      const workers = [];
+      const workerCount = Math.min(MAX_CONCURRENT, tasks.length);
+      for (let i = 0; i < workerCount; i++) {
+        workers.push(worker());
+      }
+      await Promise.all(workers);
+      lastGlobalRefreshEl.textContent =
+        `마지막 전체 갱신: ${formatDateTime()} (점포 ${selectedStores.size}개, 아이템 ${selectedItems.size}개)`;
+    } finally {
+      isRefreshing = false;
+    }
+  }
+
+  // ====== 컨트롤 바인딩 ======
+  function startAutoRefresh() {
+    const interval = parseInt(intervalSelect.value, 10) || 10000;
+
+    if (autoTimerId !== null) {
+      clearInterval(autoTimerId);
+    }
+
+    refreshAll().catch(console.error);
+
+    autoTimerId = setInterval(() => {
+      refreshAll().catch(console.error);
+    }, interval);
+
+    runStatusDot.classList.remove('stopped');
+    runStatusDot.classList.add('running');
+    runStatusLabel.textContent = `자동 갱신 중 (${interval / 1000}초 간격)`;
+  }
+
+  function stopAutoRefresh() {
+    if (autoTimerId !== null) {
+      clearInterval(autoTimerId);
+      autoTimerId = null;
+    }
+    runStatusDot.classList.remove('running');
+    runStatusDot.classList.add('stopped');
+    runStatusLabel.textContent = '대기 중';
+  }
+
+  startBtn.addEventListener('click', () => {
+    requestNotificationPermissionIfNeeded();
+    startAutoRefresh();
+  });
+
+  stopBtn.addEventListener('click', () => {
+    stopAutoRefresh();
+  });
+
+  clearNotiBtn.addEventListener('click', () => {
+    notificationListEl.innerHTML = '';
+  });
+
+  selectAllStoresBtn.addEventListener('click', () => {
+    const cbs = document.querySelectorAll('input[name="store-select"]');
+    cbs.forEach(cb => (cb.checked = true));
+    applySelectionsToTable();
+  });
+
+  unselectAllStoresBtn.addEventListener('click', () => {
+    const cbs = document.querySelectorAll('input[name="store-select"]');
+    cbs.forEach(cb => (cb.checked = false));
+    applySelectionsToTable();
+  });
+
+  // ====== 초기화 ======
+  initAccordions();
+  initStoreSelectionPanel();
+  initItemSelectionPanel();
+  initTable();
+  applySelectionsToTable();
+
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission().then(r => {
+      console.log("Notification permission:", r);
+    });
+  }
+</script>
+</body>
+</html>
