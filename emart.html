@@ -1516,25 +1516,37 @@
       }
     });
 
-    function rowSortFn(a, b) {
-      const sa = storeByCode.get(a.dataset.storeCode);
-      const sb = storeByCode.get(b.dataset.storeCode);
-      const ia = itemOrder.get(a.dataset.skuCode) ?? 999;
-      const ib = itemOrder.get(b.dataset.skuCode) ?? 999;
+	function rowSortFn(a, b) {
+	  const sa = storeByCode.get(a.dataset.storeCode);
+	  const sb = storeByCode.get(b.dataset.storeCode);
+	  const ia = itemOrder.get(a.dataset.skuCode) ?? 999;
+	  const ib = itemOrder.get(b.dataset.skuCode) ?? 999;
 
-      const ao =
-        (areaOrder.get(sa?.areaCode) ?? 999) -
-        (areaOrder.get(sb?.areaCode) ?? 999);
-      if (ao !== 0) return ao;
+	  const keyA = `${a.dataset.storeCode}_${a.dataset.skuCode}`;
+	  const keyB = `${b.dataset.storeCode}_${b.dataset.skuCode}`;
+	  const stateA = lastStateMap.get(keyA);
+	  const stateB = lastStateMap.get(keyB);
 
-      const sn = (sa?.storeName || '').localeCompare(
-        sb?.storeName || '',
-        'ko'
-      );
-      if (sn !== 0) return sn;
+	  const availA = stateA && stateA.available === true ? 1 : 0;
+	  const availB = stateB && stateB.available === true ? 1 : 0;
 
-      return ia - ib;
-    }
+	  if (availA !== availB) {
+		return availB - availA;
+	  }
+
+	  const ao =
+		(areaOrder.get(sa?.areaCode) ?? 999) -
+		(areaOrder.get(sb?.areaCode) ?? 999);
+	  if (ao !== 0) return ao;
+
+	  const sn = (sa?.storeName || '').localeCompare(
+		sb?.storeName || '',
+		'ko'
+	  );
+	  if (sn !== 0) return sn;
+
+	  return ia - ib;
+	}
 
     activeRows.sort(rowSortFn);
     inactiveRows.sort(rowSortFn);
@@ -1707,6 +1719,7 @@
         workers.push(worker());
       }
       await Promise.all(workers);
+	  applySelectionsToTable();
       lastGlobalRefreshEl.textContent =
         `마지막 전체 갱신: ${formatDateTime()} (점포 ${selectedStores.size}개, 아이템 ${selectedItems.size}개)`;
     } finally {
